@@ -1,0 +1,765 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <title>The Password Game - HACKER EDITION</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: 'Courier New', monospace;
+      background: linear-gradient(135deg, #0a0a0a 0%, #1a1a2e 100%);
+      color: #00ff41;
+      min-height: 100vh;
+      padding: 20px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      overflow-x: hidden;
+    }
+
+    .container {
+      max-width: 800px;
+      width: 100%;
+      background: rgba(20, 20, 30, 0.9);
+      border: 2px solid #00ff41;
+      border-radius: 10px;
+      padding: 30px;
+      box-shadow: 0 0 30px rgba(0, 255, 65, 0.3);
+      position: relative;
+      overflow: hidden;
+    }
+
+    .container::before {
+      content: "";
+      position: absolute;
+      top: -50%;
+      left: -50%;
+      width: 200%;
+      height: 200%;
+      background: repeating-linear-gradient(
+        0deg,
+        transparent,
+        transparent 2px,
+        rgba(0, 255, 65, 0.05) 2px,
+        rgba(0, 255, 65, 0.05) 4px
+      );
+      z-index: -1;
+      animation: matrix 20s linear infinite;
+    }
+
+    @keyframes matrix {
+      0% { transform: translateY(0); }
+      100% { transform: translateY(20px); }
+    }
+
+    h1 {
+      text-align: center;
+      font-size: 2.5em;
+      margin-bottom: 20px;
+      text-transform: uppercase;
+      letter-spacing: 3px;
+      text-shadow: 0 0 10px #00ff41;
+      position: relative;
+    }
+
+    h1::after {
+      content: "";
+      display: block;
+      width: 100px;
+      height: 3px;
+      background: #00ff41;
+      margin: 10px auto;
+      box-shadow: 0 0 10px #00ff41;
+    }
+
+    .password-container {
+      position: relative;
+      margin: 30px 0;
+    }
+
+    #pwdInput {
+      width: 100%;
+      padding: 15px 20px;
+      font-size: 1.2em;
+      font-family: 'Courier New', monospace;
+      background: rgba(0, 0, 0, 0.8);
+      border: 2px solid #333;
+      border-radius: 5px;
+      color: #00ff41;
+      outline: none;
+      transition: all 0.3s ease;
+      letter-spacing: 2px;
+    }
+
+    #pwdInput:focus {
+      border-color: #00ff41;
+      box-shadow: 0 0 15px rgba(0, 255, 65, 0.5);
+    }
+
+    .strength-meter {
+      height: 5px;
+      background: #333;
+      border-radius: 2px;
+      margin-top: 10px;
+      overflow: hidden;
+    }
+
+    .strength-fill {
+      height: 100%;
+      width: 0%;
+      background: #ff0000;
+      transition: width 0.3s ease, background 0.3s ease;
+      border-radius: 2px;
+    }
+
+    .rules-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+      gap: 15px;
+      margin: 30px 0;
+    }
+
+    .rule-card {
+      background: rgba(30, 30, 40, 0.8);
+      border: 1px solid #333;
+      border-radius: 8px;
+      padding: 15px;
+      transition: all 0.3s ease;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .rule-card::before {
+      content: "";
+      position: absolute;
+      top: 0;
+      left: -100%;
+      width: 100%;
+      height: 100%;
+      background: linear-gradient(90deg, transparent, rgba(0, 255, 65, 0.1), transparent);
+      transition: left 0.5s ease;
+    }
+
+    .rule-card:hover::before {
+      left: 100%;
+    }
+
+    .rule-card.passed {
+      border-color: #00ff41;
+      background: rgba(0, 255, 65, 0.05);
+    }
+
+    .rule-card.active {
+      border-color: #ffaa00;
+      background: rgba(255, 170, 0, 0.05);
+      animation: pulse 2s infinite;
+    }
+
+    @keyframes pulse {
+      0%, 100% { box-shadow: 0 0 5px rgba(255, 170, 0, 0.5); }
+      50% { box-shadow: 0 0 20px rgba(255, 170, 0, 0.8); }
+    }
+
+    .rule-card.failed {
+      border-color: #ff0000;
+      background: rgba(255, 0, 0, 0.05);
+    }
+
+    .rule-number {
+      font-weight: bold;
+      color: #888;
+      margin-right: 10px;
+    }
+
+    .rule-text {
+      display: inline;
+    }
+
+    .rule-icon {
+      float: right;
+      font-size: 1.2em;
+    }
+
+    .passed .rule-icon { color: #00ff41; }
+    .failed .rule-icon { color: #ff0000; }
+    .active .rule-icon { color: #ffaa00; }
+
+    .stats {
+      display: flex;
+      justify-content: space-between;
+      margin: 20px 0;
+      padding: 15px;
+      background: rgba(0, 0, 0, 0.5);
+      border-radius: 8px;
+      border: 1px solid #333;
+    }
+
+    .stat-item {
+      text-align: center;
+    }
+
+    .stat-value {
+      font-size: 1.5em;
+      font-weight: bold;
+      color: #00ff41;
+    }
+
+    .stat-label {
+      font-size: 0.9em;
+      color: #888;
+    }
+
+    #status {
+      text-align: center;
+      padding: 20px;
+      font-size: 1.2em;
+      margin: 20px 0;
+      border-radius: 8px;
+      background: rgba(0, 0, 0, 0.5);
+      border: 1px solid;
+      transition: all 0.3s ease;
+      min-height: 60px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .status-success {
+      color: #00ff41;
+      border-color: #00ff41;
+      background: rgba(0, 255, 65, 0.05) !important;
+      animation: success-pulse 1s infinite;
+    }
+
+    @keyframes success-pulse {
+      0%, 100% { box-shadow: 0 0 10px rgba(0, 255, 65, 0.3); }
+      50% { box-shadow: 0 0 30px rgba(0, 255, 65, 0.6); }
+    }
+
+    .status-error {
+      color: #ff0000;
+      border-color: #ff0000;
+    }
+
+    .status-warning {
+      color: #ffaa00;
+      border-color: #ffaa00;
+    }
+
+    .hint {
+      color: #888;
+      font-size: 0.9em;
+      margin-top: 5px;
+      font-style: italic;
+    }
+
+    .controls {
+      display: flex;
+      gap: 10px;
+      justify-content: center;
+      margin-top: 20px;
+    }
+
+    button {
+      padding: 10px 20px;
+      font-family: 'Courier New', monospace;
+      background: rgba(0, 0, 0, 0.8);
+      border: 2px solid #00ff41;
+      color: #00ff41;
+      border-radius: 5px;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      font-weight: bold;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+    }
+
+    button:hover {
+      background: rgba(0, 255, 65, 0.1);
+      box-shadow: 0 0 15px rgba(0, 255, 65, 0.5);
+      transform: translateY(-2px);
+    }
+
+    button:active {
+      transform: translateY(0);
+    }
+
+    .hidden-password {
+      position: absolute;
+      right: 15px;
+      top: 50%;
+      transform: translateY(-50%);
+      background: none;
+      border: none;
+      color: #888;
+      cursor: pointer;
+      font-size: 1.2em;
+    }
+
+    /* Responsive */
+    @media (max-width: 768px) {
+      .container {
+        padding: 15px;
+      }
+      
+      h1 {
+        font-size: 1.8em;
+      }
+      
+      .rules-grid {
+        grid-template-columns: 1fr;
+      }
+      
+      .stats {
+        flex-direction: column;
+        gap: 10px;
+      }
+    }
+  </style>
+</head>
+<body>
+
+  <div class="container">
+    <h1>THE PASSWORD GAME <span style="font-size: 0.6em; color: #ffaa00;">HACKER EDITION</span></h1>
+    
+    <div class="password-container">
+      <input type="password" id="pwdInput" placeholder="ENTER YOUR PASSWORD..." autocomplete="off" autofocus>
+      <button class="hidden-password" id="togglePassword">👁️</button>
+      <div class="strength-meter">
+        <div class="strength-fill" id="strengthFill"></div>
+      </div>
+      <div class="hint" id="passwordHint"></div>
+    </div>
+
+    <div class="stats">
+      <div class="stat-item">
+        <div class="stat-value" id="score">0</div>
+        <div class="stat-label">SCORE</div>
+      </div>
+      <div class="stat-item">
+        <div class="stat-value" id="level">1</div>
+        <div class="stat-label">LEVEL</div>
+      </div>
+      <div class="stat-item">
+        <div class="stat-value" id="strength">0%</div>
+        <div class="stat-label">STRENGTH</div>
+      </div>
+      <div class="stat-item">
+        <div class="stat-value" id="time">∞</div>
+        <div class="stat-label">TIME</div>
+      </div>
+    </div>
+
+    <div class="rules-grid" id="rulesGrid"></div>
+
+    <div id="status" class="status-warning">Start typing your password...</div>
+
+    <div class="controls">
+      <button id="hintBtn">💡 GET HINT</button>
+      <button id="resetBtn">🔄 RESET GAME</button>
+      <button id="copyBtn">📋 COPY PASSWORD</button>
+    </div>
+  </div>
+
+  <script>
+    // Estado del juego
+    let currentLevel = 0;
+    let score = 0;
+    let startTime = null;
+    let timerInterval = null;
+    let passwordVisible = false;
+
+    // Reglas del juego (más difíciles y divertidas)
+    const rules = [
+      {
+        id: 1,
+        check: pwd => pwd.length >= 8,
+        text: "Password must be at least 8 characters long",
+        hint: "Make it longer! Minimum 8 characters.",
+        points: 10
+      },
+      {
+        id: 2,
+        check: pwd => /[0-9]/.test(pwd),
+        text: "Must contain at least one number (0-9)",
+        hint: "Add a number like 7 or 42",
+        points: 10
+      },
+      {
+        id: 3,
+        check: pwd => /[A-Z]/.test(pwd),
+        text: "Must contain at least one UPPERCASE letter",
+        hint: "Press SHIFT or Caps Lock",
+        points: 10
+      },
+      {
+        id: 4,
+        check: pwd => /[a-z]/.test(pwd),
+        text: "Must contain at least one lowercase letter",
+        hint: "Just type normally",
+        points: 10
+      },
+      {
+        id: 5,
+        check: pwd => /[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?]+/.test(pwd),
+        text: "Must contain at least one special character",
+        hint: "Try ! @ # $ % etc.",
+        points: 15
+      },
+      {
+        id: 6,
+        check: pwd => {
+          const nums = pwd.match(/\d/g);
+          const sum = nums ? nums.map(n => parseInt(n)).reduce((a, b) => a + b, 0) : 0;
+          return sum === 25;
+        },
+        text: "Sum of all numbers must equal 25",
+        hint: "Example: 7+9+4+5 = 25 or 2+5+8+10 = 25",
+        points: 25
+      },
+      {
+        id: 7,
+        check: pwd => /(.)\1/.test(pwd),
+        text: "Must contain at least one repeated character (aa, 11, ##)",
+        hint: "Type the same character twice in a row",
+        points: 15
+      },
+      {
+        id: 8,
+        check: pwd => {
+          const months = ['jan', 'feb', 'mar', 'apr', 'may', 'jun', 'jul', 'aug', 'sep', 'oct', 'nov', 'dec'];
+          return months.some(month => pwd.toLowerCase().includes(month));
+        },
+        text: "Must contain a month name (jan, feb, mar...)",
+        hint: "Add a month like 'jan' or 'december'",
+        points: 20
+      },
+      {
+        id: 9,
+        check: pwd => /[aeiou]{3,}/i.test(pwd),
+        text: "Must contain 3 consecutive vowels (aeiou)",
+        hint: "Try 'aei' or 'ooo' or 'uia'",
+        points: 20
+      },
+      {
+        id: 10,
+        check: pwd => {
+          const words = pwd.split(/[^a-z]/i).filter(w => w.length > 0);
+          return words.some(w => w.length >= 5);
+        },
+        text: "Must contain a word with 5+ letters",
+        hint: "Add a word like 'dragon' or 'secret'",
+        points: 20
+      },
+      {
+        id: 11,
+        check: pwd => {
+          const charCodes = pwd.split('').map(c => c.charCodeAt(0));
+          return charCodes.some(code => code >= 33 && code <= 47);
+        },
+        text: "Must contain an ASCII symbol ( ! \" # $ % & ' ( ) * + , - . / )",
+        hint: "Add symbols like ! or # or &",
+        points: 15
+      },
+      {
+        id: 12,
+        check: pwd => /^(?=.*[A-Z])(?=.*[a-z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{12,}$/.test(pwd),
+        text: "FINAL: All previous rules + 12+ characters",
+        hint: "Combine everything! Example: Dr@gon$25Januaryaei!",
+        points: 50
+      }
+    ];
+
+    // Elementos del DOM
+    const pwdInput = document.getElementById('pwdInput');
+    const rulesGrid = document.getElementById('rulesGrid');
+    const statusEl = document.getElementById('status');
+    const strengthFill = document.getElementById('strengthFill');
+    const passwordHint = document.getElementById('passwordHint');
+    const scoreEl = document.getElementById('score');
+    const levelEl = document.getElementById('level');
+    const strengthEl = document.getElementById('strength');
+    const timeEl = document.getElementById('time');
+    const togglePasswordBtn = document.getElementById('togglePassword');
+    const hintBtn = document.getElementById('hintBtn');
+    const resetBtn = document.getElementById('resetBtn');
+    const copyBtn = document.getElementById('copyBtn');
+
+    // Inicializar juego
+    function initGame() {
+      currentLevel = 0;
+      score = 0;
+      startTime = new Date();
+      updateStats();
+      renderRules();
+      updateStatus();
+      startTimer();
+      pwdInput.value = '';
+      pwdInput.focus();
+    }
+
+    // Renderizar reglas
+    function renderRules() {
+      rulesGrid.innerHTML = '';
+      rules.forEach((rule, index) => {
+        const card = document.createElement('div');
+        card.className = 'rule-card';
+        
+        if (index < currentLevel) {
+          card.classList.add('passed');
+        } else if (index === currentLevel) {
+          card.classList.add('active');
+        }
+        
+        const passed = rule.check(pwdInput.value);
+        if (index === currentLevel && !passed) {
+          card.classList.add('failed');
+        }
+        
+        card.innerHTML = `
+          <span class="rule-number">${rule.id}.</span>
+          <span class="rule-text">${rule.text}</span>
+          <span class="rule-icon">${getRuleIcon(index)}</span>
+          <div class="hint">${index === currentLevel && !passed ? rule.hint : ''}</div>
+        `;
+        
+        rulesGrid.appendChild(card);
+      });
+    }
+
+    // Obtener icono según estado
+    function getRuleIcon(index) {
+      if (index < currentLevel) return '✅';
+      if (index === currentLevel) return '🎯';
+      return '🔒';
+    }
+
+    // Verificar contraseña
+    function checkPassword() {
+      const pwd = pwdInput.value;
+      let passedCurrent = false;
+      
+      // Verificar todas las reglas
+      rules.forEach((rule, index) => {
+        if (index === currentLevel && rule.check(pwd)) {
+          passedCurrent = true;
+        }
+      });
+      
+      // Avanzar nivel si pasa la regla actual
+      if (passedCurrent && currentLevel < rules.length) {
+        score += rules[currentLevel].points;
+        currentLevel++;
+        
+        if (currentLevel === rules.length) {
+          gameWon();
+        } else {
+          playSound('success');
+          showMessage(`✅ LEVEL ${currentLevel} UNLOCKED! +${rules[currentLevel-1].points}pts`, 'success');
+        }
+      }
+      
+      updateStats();
+      renderRules();
+      updateStrength(pwd);
+      updateStatus();
+    }
+
+    // Juego ganado
+    function gameWon() {
+      clearInterval(timerInterval);
+      const timeTaken = Math.floor((new Date() - startTime) / 1000);
+      score += 100; // Bonus por completar
+      
+      showMessage(`
+        🏆 HACKER MASTER! 🏆
+        Password cracked in ${timeTaken} seconds!
+        Final Score: ${score} points
+        Your password: "${pwdInput.value}"
+      `, 'success');
+      
+      playSound('win');
+      pwdInput.disabled = true;
+    }
+
+    // Actualizar estadísticas
+    function updateStats() {
+      scoreEl.textContent = score;
+      levelEl.textContent = currentLevel + 1;
+      
+      const pwd = pwdInput.value;
+      const strength = calculateStrength(pwd);
+      strengthFill.style.width = `${strength}%`;
+      strengthFill.style.background = getStrengthColor(strength);
+      strengthEl.textContent = `${strength}%`;
+    }
+
+    // Calcular fortaleza de contraseña
+    function calculateStrength(pwd) {
+      let strength = 0;
+      
+      if (pwd.length >= 8) strength += 20;
+      if (pwd.length >= 12) strength += 10;
+      if (/[0-9]/.test(pwd)) strength += 15;
+      if (/[A-Z]/.test(pwd)) strength += 15;
+      if (/[a-z]/.test(pwd)) strength += 15;
+      if (/[^A-Za-z0-9]/.test(pwd)) strength += 20;
+      if (pwd.length >= 16) strength += 5;
+      
+      return Math.min(strength, 100);
+    }
+
+    // Color según fortaleza
+    function getStrengthColor(strength) {
+      if (strength < 30) return '#ff0000';
+      if (strength < 60) return '#ffaa00';
+      if (strength < 80) return '#ffff00';
+      return '#00ff00';
+    }
+
+    // Actualizar estado
+    function updateStatus() {
+      const pwd = pwdInput.value;
+      
+      if (currentLevel === rules.length) {
+        statusEl.className = 'status-success';
+        return;
+      }
+      
+      const currentRule = rules[currentLevel];
+      const passed = currentRule.check(pwd);
+      
+      if (passed) {
+        statusEl.textContent = `✅ Ready for next level! (Press any key)`;
+        statusEl.className = 'status-success';
+      } else {
+        statusEl.textContent = `🎯 Level ${currentLevel + 1}: ${currentRule.text}`;
+        statusEl.className = 'status-warning';
+      }
+      
+      // Actualizar hint
+      passwordHint.textContent = passed ? '' : `💡 Hint: ${currentRule.hint}`;
+    }
+
+    // Mostrar mensaje
+    function showMessage(text, type = 'info') {
+      statusEl.textContent = text;
+      statusEl.className = `status-${type}`;
+      
+      if (type === 'success') {
+        setTimeout(() => updateStatus(), 3000);
+      }
+    }
+
+    // Temporizador
+    function startTimer() {
+      clearInterval(timerInterval);
+      timerInterval = setInterval(() => {
+        if (startTime) {
+          const elapsed = Math.floor((new Date() - startTime) / 1000);
+          timeEl.textContent = `${elapsed}s`;
+        }
+      }, 1000);
+    }
+
+    // Sonidos (simulados)
+    function playSound(type) {
+      // En un juego real aquí irían archivos de audio
+      console.log(`Playing sound: ${type}`);
+    }
+
+    // Event Listeners
+    pwdInput.addEventListener('input', () => {
+      checkPassword();
+    });
+
+    togglePasswordBtn.addEventListener('click', () => {
+      passwordVisible = !passwordVisible;
+      pwdInput.type = passwordVisible ? 'text' : 'password';
+      togglePasswordBtn.textContent = passwordVisible ? '🙈' : '👁️';
+    });
+
+    hintBtn.addEventListener('click', () => {
+      if (currentLevel < rules.length) {
+        score = Math.max(0, score - 5); // Penalización por hint
+        showMessage(`💡 ${rules[currentLevel].hint} (-5 points)`, 'warning');
+        updateStats();
+      }
+    });
+
+    resetBtn.addEventListener('click', () => {
+      if (confirm('Are you sure you want to reset the game?')) {
+        initGame();
+        showMessage('Game reset! Start typing...', 'warning');
+      }
+    });
+
+    copyBtn.addEventListener('click', () => {
+      if (pwdInput.value) {
+        navigator.clipboard.writeText(pwdInput.value)
+          .then(() => showMessage('Password copied to clipboard!', 'success'))
+          .catch(() => showMessage('Failed to copy password', 'error'));
+      }
+    });
+
+    // Atajos de teclado
+    document.addEventListener('keydown', (e) => {
+      if (e.ctrlKey && e.key === 'r') {
+        e.preventDefault();
+        resetBtn.click();
+      }
+      if (e.ctrlKey && e.key === 'h') {
+        e.preventDefault();
+        hintBtn.click();
+      }
+      if (e.key === 'Escape') {
+        pwdInput.focus();
+      }
+    });
+
+    // Inicializar al cargar
+    window.addEventListener('load', initGame);
+
+    // Efecto de terminal typing en el placeholder
+    const placeholders = [
+      "ENTER YOUR PASSWORD...",
+      "CRACK THE CODE...",
+      "BECOME A HACKER...",
+      "TYPE SECRET CODE..."
+    ];
+    let placeholderIndex = 0;
+    let charIndex = 0;
+    let isDeleting = false;
+
+    function typePlaceholder() {
+      const current = placeholders[placeholderIndex];
+      
+      if (!isDeleting && charIndex <= current.length) {
+        pwdInput.placeholder = current.substring(0, charIndex);
+        charIndex++;
+        setTimeout(typePlaceholder, 100);
+      } else if (isDeleting && charIndex >= 0) {
+        pwdInput.placeholder = current.substring(0, charIndex);
+        charIndex--;
+        setTimeout(typePlaceholder, 50);
+      } else {
+        isDeleting = !isDeleting;
+        if (!isDeleting) {
+          placeholderIndex = (placeholderIndex + 1) % placeholders.length;
+        }
+        setTimeout(typePlaceholder, 1000);
+      }
+    }
+
+    // Iniciar efecto de typing
+    typePlaceholder();
+  </script>
+</body>
+</html>
