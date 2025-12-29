@@ -1,6 +1,7 @@
 # password-game.html
-password gme of neal.fun, more simple
 
-rules:
+password game, fun and creative.
 
-enter your passwor and play
+1. Add a random character.
+2. The system say a a series of rules
+3. You pass the game when you complete all rules
